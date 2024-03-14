@@ -35,8 +35,8 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 def set_open_params(
     model="gpt-3.5-turbo",
-    temperature=1,
-    max_tokens=800,
+    temperature=0.5,
+    max_tokens=1500,
     top_p=1,
     frequency_penalty=1,
     presence_penalty=0,
@@ -68,10 +68,14 @@ def get_completion(params, messages):
     return response
 
 sql_file_path = "myenv\Scripts\sakila-schema.sql"
+result_path="myenv\Scripts\result.sql"
 
 # Read the contents of the SQL file
 with open(sql_file_path, "r") as sql_file:
     sql_contents = sql_file.read()
+
+with open(result_path, "w") as f:
+    f.write(messages.choices[0].message.content)
 
 # print(sql_contents)
 # def query_to_csv(sql_query,  cursor, csv_file_path):
@@ -160,9 +164,11 @@ prompt = f"""
 
 By following these steps, you should be able to successfully convert a MySQL query to a PostgreSQL query. 
 
+\nconvert all the sql table structure to postgres structure {sql_contents} and write in this path {result_path} which is in sql format fully not partial.
 
 
-\nnow just Convert the MySQL schema to PostgreSQL from {sql_contents}
+
+
 
 postgresql:
 
@@ -174,10 +180,17 @@ messages = [
     {
         "role": "user",
         "content": prompt
+    },
+    {
+        "role": "assistant", 
+        "content":f"""\nand now identify foreign key relationships which contains information about foreign keys from {sql_contents} and include it in PostgreSQL schema tables fully not partial.
+"""
     }
 ]
 
 
+
+# print("Conversion result written to 'result.sql' successfully.")
 
 params = set_open_params(temperature=0)
 response = get_completion(params, messages)
@@ -220,3 +233,4 @@ print(response.choices[0].message.content)
 #     DepartmentID SERIAL PRIMARY KEY,
 #     DepartmentName TEXT NOT NULL
 # );
+# \n and now just Convert the MySQL schema to PostgreSQL from {sql_contents} by combining both.
